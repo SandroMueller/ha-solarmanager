@@ -21,10 +21,11 @@ Each device in the `devices` array is exposed as a separate Home Assistant devic
 | Sensor | API field | Unit |
 |---|---|---|
 | Power | `power` | W |
+| Battery charge | `soc` | % |
 | Temperature | `temperature` | °C |
 | Signal | `signal` | — |
 
-Temperature is only created for devices that report it.
+Battery charge and temperature are only created for devices that report them.
 
 ## Installation
 

@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from custom_components.solar_manager_local.models import PointData
+from custom_components.solar_manager_local.models import DeviceData, PointData
 from custom_components.solar_manager_local.coordinator import (
     SolarManagerDataCoordinator,
 )
@@ -128,3 +128,11 @@ async def test_original_fields_preserved() -> None:
     result = await _update(coord, _fake_point(pW=123, cW=456, pWh=0, t="t1"))
     assert result.production_power_w == 123
     assert result.consumption_power_w == 456
+
+
+def test_device_data_parses_optional_soc() -> None:
+    battery = DeviceData.from_dict({"_id": "battery-1", "power": -500, "soc": 74})
+    assert battery.soc == pytest.approx(74)
+
+    consumer = DeviceData.from_dict({"_id": "consumer-1", "power": 120})
+    assert consumer.soc is None

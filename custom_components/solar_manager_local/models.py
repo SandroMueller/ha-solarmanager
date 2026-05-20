@@ -12,6 +12,7 @@ class DeviceData:
 
     device_id: str
     power: float
+    soc: float | None
     signal: str
     temperature: float | None
     active_device: int | None
@@ -20,11 +21,13 @@ class DeviceData:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> DeviceData:
+        soc = data.get("soc")
         temp = data.get("temperature")
         active = data.get("activeDevice")
         return cls(
             device_id=str(data.get("_id", "")),
             power=float(data.get("power", 0)),
+            soc=float(soc) if soc is not None else None,
             signal=str(data.get("signal", "unknown")),
             temperature=float(temp) if temp is not None else None,
             active_device=int(active) if active is not None else None,

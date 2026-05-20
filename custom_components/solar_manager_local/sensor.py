@@ -13,6 +13,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     EntityCategory,
+    PERCENTAGE,
     UnitOfEnergy,
     UnitOfPower,
     UnitOfTemperature,
@@ -79,6 +80,14 @@ DEVICE_SENSOR_DESCRIPTIONS: tuple[SolarManagerDeviceSensorDescription, ...] = (
         value_fn=lambda d: d.power,
     ),
     SolarManagerDeviceSensorDescription(
+        key="soc",
+        translation_key="device_soc",
+        device_class=SensorDeviceClass.BATTERY,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        value_fn=lambda d: d.soc,
+    ),
+    SolarManagerDeviceSensorDescription(
         key="temperature",
         translation_key="device_temperature",
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -115,6 +124,9 @@ async def async_setup_entry(
     # ── Per-device sensors ──────────────────────────────────────────
     for device in coordinator.data.devices:
         for desc in DEVICE_SENSOR_DESCRIPTIONS:
+            # Skip state-of-charge sensor for devices that don't report it.
+            if desc.key == "soc" and device.soc is None:
+                continue
             # Skip temperature sensor for devices that don't report it.
             if desc.key == "temperature" and device.temperature is None:
                 continue

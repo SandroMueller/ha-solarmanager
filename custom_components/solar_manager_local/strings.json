@@ -22,6 +22,9 @@
       "device_power": {
         "name": "Power"
       },
+      "device_soc": {
+        "name": "Battery charge"
+      },
       "device_temperature": {
         "name": "Temperature"
       },
