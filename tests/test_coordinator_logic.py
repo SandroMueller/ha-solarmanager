@@ -136,3 +136,25 @@ def test_device_data_parses_optional_soc() -> None:
 
     consumer = DeviceData.from_dict({"_id": "consumer-1", "power": 120})
     assert consumer.soc is None
+
+
+def test_point_data_parses_soc_from_regular_device() -> None:
+    point = PointData.from_dict(
+        {
+            "devices": [
+                {
+                    "_id": "65730a15aa8f51290b7d472c",
+                    "activeDevice": -1,
+                    "eWh": 14.28,
+                    "iWh": 0,
+                    "power": -5270,
+                    "signal": "connected",
+                    "soc": 20,
+                }
+            ]
+        }
+    )
+
+    assert point.devices[0].device_id == "65730a15aa8f51290b7d472c"
+    assert point.devices[0].power == pytest.approx(-5270)
+    assert point.devices[0].soc == pytest.approx(20)

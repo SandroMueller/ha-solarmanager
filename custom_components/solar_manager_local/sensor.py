@@ -111,6 +111,7 @@ async def async_setup_entry(
 ) -> None:
     coordinator: SolarManagerDataCoordinator = hass.data[DOMAIN][entry.entry_id]
     entities: list[SensorEntity] = []
+    known_device_sensor_ids: set[tuple[str, str]] = set()
 
     # ── Gateway-level sensors ───────────────────────────────────────
     for description in SENSOR_DESCRIPTIONS:
@@ -121,20 +122,54 @@ async def async_setup_entry(
         else:
             entities.append(SolarManagerSensor(coordinator, entry, description))
 
+    def add_new_device_sensors() -> None:
+        new_entities = _new_device_sensor_entities(
+            coordinator, entry, known_device_sensor_ids
+        )
+        if new_entities:
+            async_add_entities(new_entities)
+
     # ── Per-device sensors ──────────────────────────────────────────
+    entities.extend(
+        _new_device_sensor_entities(coordinator, entry, known_device_sensor_ids)
+    )
+
+    async_add_entities(entities)
+    entry.async_on_unload(coordinator.async_add_listener(add_new_device_sensors))
+
+
+def _new_device_sensor_entities(
+    coordinator: SolarManagerDataCoordinator,
+    entry: ConfigEntry,
+    known_device_sensor_ids: set[tuple[str, str]],
+) -> list[SensorEntity]:
+    entities: list[SensorEntity] = []
+
     for device in coordinator.data.devices:
         for desc in DEVICE_SENSOR_DESCRIPTIONS:
-            # Skip state-of-charge sensor for devices that don't report it.
-            if desc.key == "soc" and device.soc is None:
+            if not _device_sensor_available(desc, device):
                 continue
-            # Skip temperature sensor for devices that don't report it.
-            if desc.key == "temperature" and device.temperature is None:
+
+            sensor_id = (device.device_id, desc.key)
+            if sensor_id in known_device_sensor_ids:
                 continue
+
+            known_device_sensor_ids.add(sensor_id)
             entities.append(
                 SolarManagerDeviceSensor(coordinator, entry, desc, device.device_id)
             )
 
-    async_add_entities(entities)
+    return entities
+
+
+def _device_sensor_available(
+    description: SolarManagerDeviceSensorDescription, device: DeviceData
+) -> bool:
+    if description.key == "soc":
+        return device.soc is not None
+    if description.key == "temperature":
+        return device.temperature is not None
+    return True
 
 
 class SolarManagerSensor(CoordinatorEntity[SolarManagerDataCoordinator], SensorEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
